@@ -14,31 +14,30 @@ CORS(app)
 
 # create the jackson family object
 jackson_family = FamilyStructure("Jackson")
-jackson_family.add_member(member={"name":"John","age":33,"lucky_numbers":[7,13,22]})
-jackson_family.add_member(member={"name":"Jane","age":35,"lucky_numbers":[10,14,3]})
-jackson_family.add_member(member={"name":"Jimmy","age":5,"lucky_numbers":[1]})
+jackson_family.add_member({"first_name":"John", "id": 1, "age":33, "lucky_numbers":[7,13,22]})
+jackson_family.add_member({"first_name":"Jane", "id": 2, "age":35, "lucky_numbers":[10,14,3]})
+jackson_family.add_member({"first_name":"Jimmy", "id": 3, "age":5, "lucky_numbers":[1]})
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
+
 # generate sitemap with all your endpoints
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
 
+
 #-------------------------------------------------------------------------------
 @app.route('/members', methods=['GET'])
 def handle_hello():
-
     # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family-members": members
-    }
+    response_body = members
     return jsonify(response_body), 200
+
 
 #-------------------------------------------------------------------------------
 @app.route('/member/<int:member_id>', methods=['GET'])
@@ -48,28 +47,28 @@ def get_one_member(member_id):
         return jsonify(member), 200
     return jsonify({"error":"Member not found"}), 404
 
+
 #-------------------------------------------------------------------------------
 @app.route('/member', methods=['POST'])
 def add_one_member():
     if not request.json:
         return jsonify({"error":"Invalid request"}), 400
-    
+   
     new_member = request.json
-    request_fields = ['first_name','age','lucky_numbers']
-
+    request_fields = ['first_name', 'id', 'age', 'lucky_numbers']
+   
     if not all(field in new_member for field in request_fields):
         return jsonify({"error":"Missing required fields"}), 400
-    
+   
     jackson_family.add_member(new_member)
-    return jsonify({"message": "Member added successfully"}), 200
+    return jsonify(new_member), 200
+
 
 #-------------------------------------------------------------------------------
 @app.route('/member/<int:member_id>', methods=['DELETE'])
 def delete_one_member(member_id):
     result = jackson_family.delete_member(member_id)
-    if result:
-        return jsonify({"done": True}), 200
-    return jsonify({"error": "Member noy found"}), 404
+    return jsonify({"done": result}), 200
 
 
 # this only runs if `$ python src/app.py` is executed
